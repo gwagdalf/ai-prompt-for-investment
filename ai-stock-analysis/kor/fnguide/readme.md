@@ -54,3 +54,16 @@ pip install selenium webdriver-manager beautifulsoup4
 3.  **결과 확인**:
     - 스크립트 실행이 완료되면, 동일한 디렉토리에 데이터가 저장된 `.csv` 파일을 확인할 수 있습니다.
     - 예시: `fnguide-삼성전자포함17개-005930-20240516-103000.csv`
+
+## 5. screenshot
+
+fnguide web site : https://comp.fnguide.com/SVO2/ASP/SVD_Consensus.asp?pGB=1&gicode=A005930&cID=&MenuYn=Y&ReportGB=&NewMenuID=108&stkGb=701
+![fnguide web site](../../image/fnguide.jpg)
+
+
+csv result
+![fnguide web site](../../image/fnguide-csv.jpg)
+
+
+google spread example
+![fnguide web site](../../image/fnguide-google-spread.jpg)
