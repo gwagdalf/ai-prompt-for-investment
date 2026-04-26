@@ -6,11 +6,11 @@ Google Spreadsheet API를 사용하여 스프레드시트 데이터를 조회, �
 
 | 파일 | 설명 |
 |---|---|
-| [drive_user_info.py](drive_user_info.py.md) | Google Drive API 인증 및 현재 사용자 정보 조회 모듈 |
-| [get-sheet-names.py](get-sheet-names.py.md) | 스프레드시트의 시트 이름 목록 조회 |
-| [get-sheet-details.py](get-sheet-details.py.md) | 모든 시트의 상세 데이터 조회 및 콘솔 출력 |
-| [classification.py](classification.py.md) | 키워드 기반 종목 분류 → `classification.csv` 생성 |
-| [cp_sheet_details.py](cp_sheet_details.py.md) | 소스 시트 데이터를 대상 스프레드시트로 복사 + 분류 + 서식 적용 |
+| [drive_user_info.py](src/docs/drive_user_info.py.md) | Google Drive API 인증 및 현재 사용자 정보 조회 모듈 |
+| [get-sheet-names.py](src/docs/get-sheet-names.py.md) | 스프레드시트의 시트 이름 목록 조회 |
+| [get-sheet-details.py](src/docs/get-sheet-details.py.md) | 모든 시트의 상세 데이터 조회 및 콘솔 출력 |
+| [classification.py](src/docs/classification.py.md) | 키워드 기반 종목 분류 → `classification.csv` 생성 |
+| [cp_sheet_details.py](src/docs/cp_sheet_details.py.md) | 소스 시트 데이터를 대상 스프레드시트로 복사 + 분류 + 서식 적용 |
 
 ## 사용 흐름
 

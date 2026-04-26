@@ -5,13 +5,16 @@ import csv
 import os
 import sys
 
-from drive_user_info import get_current_user
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from lib.auth import get_current_user, print_auth_info
+from lib.sheets import CLASSIFICATION_COLS, get_sheets_service
 from googleapiclient.discovery import build
 
 SHEET_ID = "1VqizBSVp7PqmWMFKW9rfzXpg629lenxjWzgwaP1mg3k"
 SHEET_NAME = "classification"
 
-OUTPUT_CSV = os.path.join(os.path.dirname(os.path.abspath(__file__)), "classification.csv")
+OUTPUT_CSV = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "classification.csv")
 
 # 분류 키워드 (순서 중요: 먼저 매칭되면 중단)
 RULES = {
@@ -49,12 +52,9 @@ RULES = {
 }
 
 
-CLASSIFICATION_COLS = ["반도체", "빅테크", "Fintech", "미국", "한국", "중국", "World"]
-
-
 def classify_stock(code: str, name: str) -> dict:
     """종목 코드/명으로 분류 플래그를 결정합니다."""
-    result = {"반도체": 0, "빅테크": 0, "Fintech": 0, "미국": 0, "한국": 0, "중국": 0, "World": 0}
+    result = {col: 0 for col in CLASSIFICATION_COLS}
     search_text = f"{code} {name}".lower()
 
     for category, keywords in RULES.items():
@@ -74,11 +74,9 @@ def main():
     sys.stdout.reconfigure(encoding="utf-8")
 
     user_info, credentials = get_current_user()
-    user = user_info.get("user", {})
-    print(f"인증 계정: {user.get('displayName')} ({user.get('emailAddress')})")
-    print()
+    print_auth_info(user_info)
 
-    service = build("sheets", "v4", credentials=credentials)
+    service = get_sheets_service(credentials)
 
     # 데이터 읽기
     result = service.spreadsheets().values().get(
