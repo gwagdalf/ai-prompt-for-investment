@@ -47,7 +47,7 @@ def load_classification():
     """classification.csv를 로드하여 (코드, 종목명) → 분류값 매핑을 반환합니다."""
     lookup = {}
     try:
-        with open(CLASSIFICATION_CSV, encoding="utf-8") as f:
+        with open(CLASSIFICATION_CSV, encoding="utf-8-sig") as f:
             reader = csv.DictReader(f)
             for row in reader:
                 key = row.get("코드", "").strip().lower()
