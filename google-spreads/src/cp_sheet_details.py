@@ -74,8 +74,8 @@ def write_data(spreadsheet_id, sheet_name, all_rows, credentials):
 
 
 def is_header_row(row):
-    """3번째 컬럼이 '접두'인 헤더성 행인지 확인."""
-    return len(row) >= 3 and row[2] == "접두"
+    """2번째 컬럼이 '접두'인 헤더성 행인지 확인."""
+    return len(row) >= 2 and row[1] == "접두"
 
 
 if __name__ == "__main__":
@@ -96,7 +96,6 @@ if __name__ == "__main__":
     all_rows = [build_header()]
     total_rows = 0
     header_row_count = 0
-    header_seen = False
     for sheet_name, sheet_data in zip(target_sheets, batch_results):
         values = sheet_data.get("values", [])
         if not values:
@@ -112,17 +111,13 @@ if __name__ == "__main__":
         for row in values:
             if is_header_row(row):
                 header_row_count += 1
-                if not header_seen:
-                    header_seen = True
-                    all_rows.append([sheet_name] + row)
-                else:
-                    continue
+                continue
             all_rows.append([sheet_name] + row)
         total_rows += len(values)
         print(f"  [{sheet_name}] {len(values)}행")
 
-    if header_row_count > 1:
-        print(f"헤더성 행 {header_row_count}개 중 {header_row_count - 1}개 필터링 (1개만 유지)")
+    if header_row_count > 0:
+        print(f"헤더성 행 {header_row_count}개 제거")
     print(f"총 {total_rows}행 수집 -> {len(all_rows) - 1}행 저장")
 
     now = datetime.datetime.now()
