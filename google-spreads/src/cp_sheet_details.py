@@ -50,7 +50,7 @@ def load_classification():
         with open(CLASSIFICATION_CSV, encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
-                key = (row.get("코드", "").strip().lower(), row.get("종목명", "").strip().lower())
+                key = row.get("코드", "").strip().lower()
                 lookup[key] = {col: row.get(col, "0") for col in CLASSIFICATION_COLS}
     except FileNotFoundError:
         print(f"경고: {CLASSIFICATION_CSV} 파일을 찾을 수 없습니다.")
@@ -61,7 +61,7 @@ def apply_classification(row, classification):
     """row[2](코드)와 row[4](종목명)로 분류 데이터를 매핑하여 컬럼을 추가합니다."""
     if len(row) < 5:
         return row + [""] * len(CLASSIFICATION_COLS)
-    key = (str(row[2]).strip().lower(), str(row[4]).strip().lower())
+    key = str(row[3]).strip().lower()
     if key in classification:
         return row + [classification[key][col] for col in CLASSIFICATION_COLS]
     return row + [""] * len(CLASSIFICATION_COLS)
