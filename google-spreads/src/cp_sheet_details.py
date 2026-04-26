@@ -39,7 +39,7 @@ def build_header():
     today = datetime.date.today().strftime("%Y-%m-%d")
     return [
         ["계좌", "#", "접두", "코드", "code", today, "수량", "평균단가", "현재가", "수익률", "매입금액", "평가금액", "평가손익", "통화", "환율", "=SUM(P2:P500)", "=SUM(Q2:Q500)", "=SUM(R2:R500)", "=SUM(S2:S500)", "=SUM(T2:T500)", "=SUM(U2:U500)", "=SUM(V2:V500)", "=SUM(W2:W500)"],
-        ["계좌", "#", "접두", "코드", "code", "종목명", "수량", "평균단가", "현재가", "수익률", "매입금액", "평가금액", "평가손익", "통화", "환율", "평가금액(원)", "반도체", "빅테크", "Fintech", "미국", "한국", "중국", "World"],
+        ["계좌", "#", "접두", "코드", "code", "종목명", "수량", "평균단가", "현재가", "수익률", "매입금액", "평가금액", "평가손익", "통화", "환율", "원평가", "반도체", "빅테크", "Fintech", "미국", "한국", "중국", "World"],
     ]
 
 CLASSIFICATION_CSV = os.path.join(_script_dir, "classification.csv")
@@ -62,21 +62,27 @@ def load_classification():
 
 def apply_classification(row, classification, row_num):
     """row[3](코드)로 분류 데이터를 매핑하여 컬럼을 추가합니다.
-    매칭 시 (평가금액/평가금액합계) 수식을 입력합니다.
-    """
-    # 평가금액(원) 컬럼 추가 (원본 row[11] = 평가금액)
-    eval_amount = row[11] if len(row) > 11 else ""
-    row_padded = row + [eval_amount, "", ""]
+    매칭 시 ($P{row_num}/$P$1) 수식을 입력합니다.
 
-    if len(row_padded) < 4:
-        return row_padded + [""] * len(CLASSIFICATION_COLS)
+    소스 row: [계좌,#,접두,코드,code,날짜,수량,평균단가,현재가,수익률,매입금액,평가금액,평가손익,통화,환율,원평가] (16개)
+    target:   [계좌,#,접두,코드,code,날짜,수량,평균단가,현재가,수익률,매입금액,평가금액,평가손익,통화,환율,원평가,반도체,빅테크,Fintech,미국,한국,중국,World] (23개)
+    """
+    # 소스 row는 16개 컬럼. target과 맞추기 위해:
+    # 1. 평가금액(원) = row[15] 그대로 사용 (이미 있음)
+    # 2. 분류 컬럼 7개 추가
+    padded = list(row)
+
+    # 분류 컬럼 7개 추가
     key = str(row[3]).strip().lower()
     if key in classification:
-        return row_padded + [
+        padded += [
             f"=($P{row_num}/$P$1)" if classification[key][col] == "1" else ""
             for col in CLASSIFICATION_COLS
         ]
-    return row_padded + [""] * len(CLASSIFICATION_COLS)
+    else:
+        padded += [""] * len(CLASSIFICATION_COLS)
+
+    return padded
 
 
 MAX_ROW_LIMIT = 1000
