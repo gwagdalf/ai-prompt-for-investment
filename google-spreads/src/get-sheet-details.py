@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """모든 시트의 상세 데이터를 가져와 출력합니다.
 
-- A2 셀에 저장된 row_count 값을 읽은 뒤
-- A2 부터 L{row_count} 범위까지의 데이터를 가져옵니다.
-- 제외 시트: Weight, 계좌리스트, Sum, z6키움비과세, z26방빵키움비과세방빜키움비과세
+- batchGet()으로 모든 시트 데이터를 한 번의 API 호출로 가져옵니다.
+- A2 셀에서 row_count 값을 읽어 데이터를 필터링합니다.
+- 제외 시트: Weight, 계좌리스트, Sum, z6키움비과세, z26방빜키움비과세
 """
 
 import os
@@ -28,41 +28,27 @@ EXCLUDE_SHEETS = {
     "계좌리스트",
     "Sum",
     "z6키움비과세",
-    "z26방빵키움비과세방빵키움비과세",
+    "z26방빵키움비과세",
 }
 
-
-def get_row_count(spreadsheet_id: str, sheet_name: str, credentials) -> int:
-    """A2 셀에서 row_count 값을 읽습니다."""
-    service = build("sheets", "v4", credentials=credentials)
-    result = (
-        service.spreadsheets()
-        .values()
-        .get(spreadsheetId=spreadsheet_id, range=f"{sheet_name}!A2")
-        .execute()
-    )
-    values = result.get("values", [])
-    if not values or not values[0]:
-        return 0
-    try:
-        return int(values[0][0])
-    except ValueError:
-        return 0
+# A2에서 읽어온 최대 행 수. 이 값보다 많으면 잘라서 처리합니다.
+MAX_ROW_LIMIT = 1000
 
 
-def get_sheet_data(
-    spreadsheet_id: str, sheet_name: str, row_count: int, credentials
+def get_all_sheet_data(
+    spreadsheet_id: str, sheet_names: list[str], credentials
 ) -> list:
-    """A2 부터 L{row_count} 범위의 데이터를 가져옵니다."""
+    """batchGet()으로 여러 시트 데이터를 한 번의 API 호출로 가져옵니다."""
     service = build("sheets", "v4", credentials=credentials)
-    range_name = f"{sheet_name}!A2:L{row_count}"
+    ranges = [f"{name}!A2:L{MAX_ROW_LIMIT}" for name in sheet_names]
+
     result = (
         service.spreadsheets()
         .values()
-        .get(spreadsheetId=spreadsheet_id, range=range_name)
+        .batchGet(spreadsheetId=spreadsheet_id, ranges=ranges)
         .execute()
     )
-    return result.get("values", [])
+    return result.get("valueRanges", [])
 
 
 if __name__ == "__main__":
@@ -80,15 +66,30 @@ if __name__ == "__main__":
     print(f"전체 시트: {len(all_sheet_names)}개 / 처리 대상: {len(target_sheets)}개 (제외: {len(EXCLUDE_SHEETS)}개)")
     print()
 
-    for sheet_name in target_sheets:
-        row_count = get_row_count(SPREADSHEET_ID, sheet_name, credentials)
-        if row_count < 2:
-            print(f"--- [{sheet_name}] row_count={row_count} (데이터 없음) ---")
+    # 모든 시트 데이터를 한 번의 API 호출로 가져오기
+    print("데이터 가져오는 중...")
+    batch_results = get_all_sheet_data(SPREADSHEET_ID, target_sheets, credentials)
+
+    for sheet_name, sheet_data in zip(target_sheets, batch_results):
+        values = sheet_data.get("values", [])
+        if not values:
+            print(f"--- [{sheet_name}] 데이터 없음 ---")
             print()
             continue
 
-        data = get_sheet_data(SPREADSHEET_ID, sheet_name, row_count, credentials)
-        print(f"--- [{sheet_name}] A2:L{row_count} ({len(data)} rows) ---")
-        for row in data:
+        # A2 셀에서 row_count 읽기
+        row_count = 0
+        if values and values[0]:
+            try:
+                row_count = int(values[0][0])
+            except ValueError:
+                pass
+
+        # row_count가 유효하면 해당 행까지만 잘라냄
+        if row_count > 1 and row_count < len(values) + 1:
+            values = values[: row_count - 1]  # -1: A2가 시작점이므로
+
+        print(f"--- [{sheet_name}] A2:L{row_count} ({len(values)} rows) ---")
+        for row in values:
             print(row)
         print()
