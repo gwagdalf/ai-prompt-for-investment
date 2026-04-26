@@ -8,11 +8,14 @@
 
 import os
 import sys
+import codecs
 import importlib.util
 
 from googleapiclient.discovery import build
 
 from drive_user_info import get_current_user
+
+sys.stdout.reconfigure(encoding='utf-8')
 
 # 하이픈이 있는 파일명 임포트
 _script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -40,7 +43,7 @@ def get_all_sheet_data(
 ) -> list:
     """batchGet()으로 여러 시트 데이터를 한 번의 API 호출로 가져옵니다."""
     service = build("sheets", "v4", credentials=credentials)
-    ranges = [f"{name}!A2:L{MAX_ROW_LIMIT}" for name in sheet_names]
+    ranges = [f"{name}!A2:O{MAX_ROW_LIMIT}" for name in sheet_names]
 
     result = (
         service.spreadsheets()
@@ -86,10 +89,11 @@ if __name__ == "__main__":
                 pass
 
         # row_count가 유효하면 해당 행까지만 잘라냄
-        if row_count > 1 and row_count < len(values) + 1:
-            values = values[: row_count - 1]  # -1: A2가 시작점이므로
+        if row_count > 1 and row_count + 2 < len(values) - 1:
+            values = values[: row_count + 1]  # -1: A2가 시작점이므로
 
-        print(f"--- [{sheet_name}] A2:L{row_count} ({len(values)} rows) ---")
+        print(f"sheet명 : {sheet_name}")
         for row in values:
-            print(row)
+            row_with_name = [sheet_name] + row
+            print(row_with_name)
         print()
