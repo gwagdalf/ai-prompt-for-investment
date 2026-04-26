@@ -35,12 +35,15 @@ EXCLUDE_SHEETS = {
 DEST_SHEET_ID = "1VqizBSVp7PqmWMFKW9rfzXpg629lenxjWzgwaP1mg3k"
 
 def build_header():
-    """오늘 날짜를 포함한 동적 헤더를 생성합니다."""
+    """두 줄의 동적 헤더를 생성합니다."""
     today = datetime.date.today().strftime("%Y-%m-%d")
-    return ["계좌", "#", "접두", "코드", "code", today, "수량", "평균단가", "현재가", "수익률", "매입금액", "평가금액", "평가손익", "통화", "환율", "=SUM(P2:P500)","반도체","빅테크","미국","한국","중국","World"]
+    return [
+        ["계좌", "#", "접두", "코드", "code", today, "수량", "평균단가", "현재가", "수익률", "매입금액", "평가금액", "평가손익", "통화", "환율", "=SUM(P2:P500)", "=SUM(Q2:Q500)", "=SUM(R2:R500)", "=SUM(S2:S500)", "=SUM(T2:T500)", "=SUM(U2:U500)", "=SUM(V2:V500)", "=SUM(W2:W500)"],
+        ["계좌", "#", "접두", "코드", "code", "종목명", "수량", "평균단가", "현재가", "수익률", "매입금액", "평가금액", "평가손익", "통화", "환율", "평가금액(원)", "반도체", "빅테크", "Fintech", "미국", "한국", "중국", "World"],
+    ]
 
 CLASSIFICATION_CSV = os.path.join(_script_dir, "classification.csv")
-CLASSIFICATION_COLS = ["반도체", "빅테크", "미국", "한국", "중국", "World"]
+CLASSIFICATION_COLS = ["반도체", "빅테크", "Fintech", "미국", "한국", "중국", "World"]
 
 
 def load_classification():
@@ -59,17 +62,21 @@ def load_classification():
 
 def apply_classification(row, classification, row_num):
     """row[3](코드)로 분류 데이터를 매핑하여 컬럼을 추가합니다.
-    매칭 시 ($P{row_num}/$P$1) 수식을 입력합니다.
+    매칭 시 (평가금액/평가금액합계) 수식을 입력합니다.
     """
-    if len(row) < 4:
-        return row + [""] * len(CLASSIFICATION_COLS)
+    # 평가금액(원) 컬럼 추가 (원본 row[11] = 평가금액)
+    eval_amount = row[11] if len(row) > 11 else ""
+    row_padded = row + [eval_amount, "", ""]
+
+    if len(row_padded) < 4:
+        return row_padded + [""] * len(CLASSIFICATION_COLS)
     key = str(row[3]).strip().lower()
     if key in classification:
-        return row + [
+        return row_padded + [
             f"=($P{row_num}/$P$1)" if classification[key][col] == "1" else ""
             for col in CLASSIFICATION_COLS
         ]
-    return row + [""] * len(CLASSIFICATION_COLS)
+    return row_padded + [""] * len(CLASSIFICATION_COLS)
 
 
 MAX_ROW_LIMIT = 1000
@@ -130,11 +137,11 @@ if __name__ == "__main__":
     classification = load_classification()
     print(f"분류 데이터 {len(classification)}개 로드")
 
-    all_rows = [build_header()]
+    all_rows = build_header()
     total_rows = 0
     header_row_count = 0
     classified_count = 0
-    output_row = 1  # 헤더가 1행이므로
+    output_row = 2  # 헤더가 2행이므로
     for sheet_name, sheet_data in zip(target_sheets, batch_results):
         values = sheet_data.get("values", [])
         if not values:

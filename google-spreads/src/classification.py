@@ -26,16 +26,20 @@ RULES = {
         "msft", "meta", "tsla", "naver", "카카오",
         "top7", "top10",
     ],
+    "Fintech": [
+        "핀테크", "fintech", "페이", "payment", "토스", "간편결제",
+        "페이팔", "paypal", "block", "square", "stripe", "이니시스",
+        "다날", "kcp", "나이스정보통신",
+    ],
     "미국": [
         "usa", "us", "미국", "나스닥", "나스닥100", "s&p", "s&p500",
         "nyse", "wall street", "spdr", "qqq", "spy", "ark",
         "미국필라델피아", "미국빅테크", "미국나스닥", "미국s&p",
     ],
     "한국": [
-        "krx", "코스피", "코스닥", "korea", "한국", "삼성", "sk", "lg",
+        "korea", "한국", "삼성", "sk", "lg",
         "현대", "기아", "카카오", "naver", "네이버", "메리츠",
-        "tiger", "kodex", "ace", "hanaro", "plus", "time", "미래에셋",
-        "kgcg", "kscg",
+        "미래에셋", "kgcg", "kscg",
     ],
     "중국": [
         "중국", "china", "상하이", "선전", "항생", "항셍", "h항셍",
@@ -45,9 +49,12 @@ RULES = {
 }
 
 
+CLASSIFICATION_COLS = ["반도체", "빅테크", "Fintech", "미국", "한국", "중국", "World"]
+
+
 def classify_stock(code: str, name: str) -> dict:
     """종목 코드/명으로 분류 플래그를 결정합니다."""
-    result = {"반도체": 0, "빅테크": 0, "미국": 0, "한국": 0, "중국": 0, "World": 0}
+    result = {"반도체": 0, "빅테크": 0, "Fintech": 0, "미국": 0, "한국": 0, "중국": 0, "World": 0}
     search_text = f"{code} {name}".lower()
 
     for category, keywords in RULES.items():
@@ -91,12 +98,16 @@ def main():
     # 컬럼 인덱스 찾기
     code_idx = None
     name_idx = None
+    class_indices = {}
     for i, col in enumerate(header):
         if col.strip().lower() in ("코드", "code"):
             if code_idx is None:
                 code_idx = i
         if col.strip().lower() in ("종목명", "종목", "name"):
             name_idx = i
+        for cname in CLASSIFICATION_COLS:
+            if col.strip() == cname:
+                class_indices[cname] = i
 
     if code_idx is None or name_idx is None:
         print(f"에러: 코드/종목명 컬럼을 찾을 수 없습니다 (code_idx={code_idx}, name_idx={name_idx})")
@@ -108,6 +119,7 @@ def main():
     output_rows = []
     seen_codes = set()
     classified_count = 0
+    auto_classified = 0
 
     for row in rows[1:]:
         if not row or all(c.strip() == "" for c in row):
@@ -124,7 +136,27 @@ def main():
             continue
         seen_codes.add(code.lower())
 
-        flags = classify_stock(code, name)
+        # 기존 시트의 분류 데이터 확인
+        existing_flags = {}
+        all_empty = True
+        for cname in CLASSIFICATION_COLS:
+            idx = class_indices.get(cname)
+            val = row[idx].strip() if idx is not None and len(row) > idx else ""
+            existing_flags[cname] = val
+            if val not in ("", "0"):
+                all_empty = False
+
+        if all_empty:
+            # 기존 분류 없음 → 자동 분류
+            flags = classify_stock(code, name)
+            auto_classified += 1
+        else:
+            # 기존 분류 사용
+            flags = {}
+            for cname in CLASSIFICATION_COLS:
+                v = existing_flags[cname]
+                flags[cname] = 1 if v == "1" else 0
+
         classified_count += 1
 
         output_rows.append({
@@ -134,14 +166,14 @@ def main():
             **flags,
         })
 
-    print(f"분류 완료: {classified_count}개 종목")
+    print(f"분류 완료: {classified_count}개 종목 (기존 분류 유지: {classified_count - auto_classified}개, 자동 분류: {auto_classified}개)")
 
     # CSV 저장 (기존 데이터 삭제 후 새로 씀)
     if os.path.exists(OUTPUT_CSV):
         os.remove(OUTPUT_CSV)
         print(f"기존 {OUTPUT_CSV} 데이터 삭제")
 
-    fieldnames = ["코드", "code", "종목명", "반도체", "빅테크", "미국", "한국", "중국", "World"]
+    fieldnames = ["코드", "code", "종목명", "반도체", "빅테크", "Fintech", "미국", "한국", "중국", "World"]
     with open(OUTPUT_CSV, "w", newline="", encoding="utf-8-sig") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
