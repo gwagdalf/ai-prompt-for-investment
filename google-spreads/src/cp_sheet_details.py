@@ -57,13 +57,18 @@ def load_classification():
     return lookup
 
 
-def apply_classification(row, classification):
-    """row[2](코드)와 row[4](종목명)로 분류 데이터를 매핑하여 컬럼을 추가합니다."""
-    if len(row) < 5:
+def apply_classification(row, classification, row_num):
+    """row[3](코드)로 분류 데이터를 매핑하여 컬럼을 추가합니다.
+    매칭 시 ($P{row_num}/$P$1) 수식을 입력합니다.
+    """
+    if len(row) < 4:
         return row + [""] * len(CLASSIFICATION_COLS)
     key = str(row[3]).strip().lower()
     if key in classification:
-        return row + [classification[key][col] for col in CLASSIFICATION_COLS]
+        return row + [
+            f"=($P{row_num}/$P$1)" if classification[key][col] == "1" else ""
+            for col in CLASSIFICATION_COLS
+        ]
     return row + [""] * len(CLASSIFICATION_COLS)
 
 
@@ -129,6 +134,7 @@ if __name__ == "__main__":
     total_rows = 0
     header_row_count = 0
     classified_count = 0
+    output_row = 1  # 헤더가 1행이므로
     for sheet_name, sheet_data in zip(target_sheets, batch_results):
         values = sheet_data.get("values", [])
         if not values:
@@ -145,8 +151,9 @@ if __name__ == "__main__":
             if is_header_row(row):
                 header_row_count += 1
                 continue
-            enriched = apply_classification([sheet_name] + row, classification)
-            if enriched[-len(CLASSIFICATION_COLS):] != [""] * len(CLASSIFICATION_COLS):
+            output_row += 1
+            enriched = apply_classification([sheet_name] + row, classification, output_row)
+            if any(enriched[-len(CLASSIFICATION_COLS):]):
                 classified_count += 1
             all_rows.append(enriched)
         total_rows += len(values)

@@ -104,8 +104,9 @@ def main():
 
     print(f"코드 컬럼 인덱스: {code_idx}, 종목명 컬럼 인덱스: {name_idx}")
 
-    # 분류 및 출력
+    # 분류 및 출력 (중복 제거: 코드 기준)
     output_rows = []
+    seen_codes = set()
     classified_count = 0
 
     for row in rows[1:]:
@@ -117,6 +118,11 @@ def main():
 
         if not code and not name:
             continue
+
+        # 코드 중복 제거
+        if code.lower() in seen_codes:
+            continue
+        seen_codes.add(code.lower())
 
         flags = classify_stock(code, name)
         classified_count += 1
