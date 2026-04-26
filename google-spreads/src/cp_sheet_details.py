@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """get-sheet-details.py 데이터를 읽어 대상 스프레드시트에 복사합니다."""
 
+import csv
 import datetime
 import importlib.util
 import os
@@ -37,6 +38,34 @@ def build_header():
     """오늘 날짜를 포함한 동적 헤더를 생성합니다."""
     today = datetime.date.today().strftime("%Y-%m-%d")
     return ["계좌", "#", "접두", "코드", "code", today, "수량", "평균단가", "현재가", "수익률", "매입금액", "평가금액", "평가손익", "통화", "환율", "=SUM(P2:P500)","반도체","빅테크","미국","한국","중국","World"]
+
+CLASSIFICATION_CSV = os.path.join(_script_dir, "classification.csv")
+CLASSIFICATION_COLS = ["반도체", "빅테크", "미국", "한국", "중국", "World"]
+
+
+def load_classification():
+    """classification.csv를 로드하여 (코드, 종목명) → 분류값 매핑을 반환합니다."""
+    lookup = {}
+    try:
+        with open(CLASSIFICATION_CSV, encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                key = (row.get("코드", "").strip().lower(), row.get("종목명", "").strip().lower())
+                lookup[key] = {col: row.get(col, "0") for col in CLASSIFICATION_COLS}
+    except FileNotFoundError:
+        print(f"경고: {CLASSIFICATION_CSV} 파일을 찾을 수 없습니다.")
+    return lookup
+
+
+def apply_classification(row, classification):
+    """row[2](코드)와 row[4](종목명)로 분류 데이터를 매핑하여 컬럼을 추가합니다."""
+    if len(row) < 5:
+        return row + [""] * len(CLASSIFICATION_COLS)
+    key = (str(row[2]).strip().lower(), str(row[4]).strip().lower())
+    if key in classification:
+        return row + [classification[key][col] for col in CLASSIFICATION_COLS]
+    return row + [""] * len(CLASSIFICATION_COLS)
+
 
 MAX_ROW_LIMIT = 1000
 
@@ -93,9 +122,13 @@ if __name__ == "__main__":
     print("소스 시트 데이터 가져오는 중...")
     batch_results = get_all_sheet_data(SPREADSHEET_ID, target_sheets, credentials)
 
+    classification = load_classification()
+    print(f"분류 데이터 {len(classification)}개 로드")
+
     all_rows = [build_header()]
     total_rows = 0
     header_row_count = 0
+    classified_count = 0
     for sheet_name, sheet_data in zip(target_sheets, batch_results):
         values = sheet_data.get("values", [])
         if not values:
@@ -112,13 +145,16 @@ if __name__ == "__main__":
             if is_header_row(row):
                 header_row_count += 1
                 continue
-            all_rows.append([sheet_name] + row)
+            enriched = apply_classification([sheet_name] + row, classification)
+            if enriched[-len(CLASSIFICATION_COLS):] != [""] * len(CLASSIFICATION_COLS):
+                classified_count += 1
+            all_rows.append(enriched)
         total_rows += len(values)
         print(f"  [{sheet_name}] {len(values)}행")
 
     if header_row_count > 0:
         print(f"헤더성 행 {header_row_count}개 제거")
-    print(f"총 {total_rows}행 수집 -> {len(all_rows) - 1}행 저장")
+    print(f"분류 매칭 {classified_count}행 / 총 {total_rows}행 수집 -> {len(all_rows) - 1}행 저장")
 
     now = datetime.datetime.now()
     new_sheet_name = now.strftime("%Y%m%d_%H%M%S")
