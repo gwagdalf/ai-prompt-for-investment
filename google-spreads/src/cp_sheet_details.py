@@ -106,6 +106,81 @@ def create_sheet(spreadsheet_id, sheet_name, credentials):
     print(f"새 시트 생성: {sheet_name}")
 
 
+def format_percentage_range(spreadsheet_id, sheet_name, credentials):
+    """Q:W 컬럼에 퍼센트 서식(소수점 없음), P1에 숫자 서식(소수점 없음)을 적용합니다."""
+    service = build("sheets", "v4", credentials=credentials)
+
+    # 시트 ID 조회
+    sheet_metadata = service.spreadsheets().get(
+        spreadsheetId=spreadsheet_id,
+        ranges=[sheet_name],
+        fields="sheets(properties(sheetId,title))",
+    ).execute()
+    sheet_id = None
+    for sheet in sheet_metadata.get("sheets", []):
+        if sheet["properties"]["title"] == sheet_name:
+            sheet_id = sheet["properties"]["sheetId"]
+            break
+
+    body = {
+        "requests": [
+            # Q1:W500 퍼센트 서식
+            {
+                "repeatCell": {
+                    "range": {
+                        "sheetId": sheet_id,
+                        "startColumnIndex": 16,  # Q (0-based)
+                        "endColumnIndex": 23,    # X 직전 (W까지)
+                        "startRowIndex": 0,
+                        "endRowIndex": 500,
+                    },
+                    "cell": {
+                        "userEnteredFormat": {
+                            "numberFormat": {
+                                "type": "PERCENT",
+                                "pattern": "0%",
+                            }
+                        }
+                    },
+                    "fields": "userEnteredFormat.numberFormat",
+                }
+            },
+            # P1 숫자 서식 (소수점 없음)
+            {
+                "updateCells": {
+                    "range": {
+                        "sheetId": sheet_id,
+                        "startColumnIndex": 15,  # P (0-based)
+                        "endColumnIndex": 16,
+                        "startRowIndex": 0,
+                        "endRowIndex": 1,
+                    },
+                    "rows": [
+                        {
+                            "values": [
+                                {
+                                    "userEnteredFormat": {
+                                        "numberFormat": {
+                                            "type": "NUMBER",
+                                            "pattern": "#,##0",
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    "fields": "userEnteredFormat.numberFormat",
+                }
+            },
+        ]
+    }
+
+    service.spreadsheets().batchUpdate(
+        spreadsheetId=spreadsheet_id, body=body
+    ).execute()
+    print(f"Q1:W500 퍼센트 서식 적용 완료")
+
+
 def write_data(spreadsheet_id, sheet_name, all_rows, credentials):
     service = build("sheets", "v4", credentials=credentials)
     body = {"values": all_rows}
@@ -183,3 +258,4 @@ if __name__ == "__main__":
 
     create_sheet(DEST_SHEET_ID, new_sheet_name, credentials)
     write_data(DEST_SHEET_ID, new_sheet_name, all_rows, credentials)
+    format_percentage_range(DEST_SHEET_ID, new_sheet_name, credentials)
