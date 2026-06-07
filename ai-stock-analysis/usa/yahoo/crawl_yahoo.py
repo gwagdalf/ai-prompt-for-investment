@@ -92,11 +92,13 @@ def get_stock_data(stock_code):
             time.sleep(3)
             soup = BeautifulSoup(driver.page_source, 'html.parser')
 
-            # company name: <h1 class="heading yf-ndxd9a">Apple Inc. (AAPL)</h1>
-            h1 = soup.find('h1')
-            if h1:
+            # Two h1s exist: logo "Yahoo Finance" (first) and stock name "Apple Inc. (AAPL)" (second).
+            # Match by content pattern " (TICKER)" to avoid class-name dependency (Art.3).
+            for h1 in soup.find_all('h1'):
                 text = h1.get_text(strip=True)
-                results['company'] = text.split(' (')[0].strip() if ' (' in text else text
+                if ' (' in text and ')' in text:
+                    results['company'] = text.split(' (')[0].strip()
+                    break
 
             # Build ordered column header list: TTM + fiscal year dates.
             # Header row on Yahoo: [Breakdown, TTM, 9/30/2025, 9/30/2024, ...]
@@ -420,10 +422,7 @@ def save_to_csv(data_list):
 
 if __name__ == "__main__":
     STOCK_CODES = [
-        "NVDA","AAPL","MSFT","AMZN","GOOGL"
-        ,"AVGO","META","TSLA","MU","AMD"
-        ,"ASML","INTC","CSCO","COST","LRCX"
-        ,"ARM","AMAT","NFLX","PLTR","TXN"
+        "NVDA"
     ]
 
     all_data = []
