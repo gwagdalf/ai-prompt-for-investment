@@ -209,3 +209,4 @@ __marimo__/
 
 # Playwright MCP session artifacts
 .playwright-mcp/
+/nh/openapi.qv/주문_SPEC_20251128.doc
