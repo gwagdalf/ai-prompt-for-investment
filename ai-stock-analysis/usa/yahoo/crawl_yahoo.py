@@ -420,11 +420,10 @@ def save_to_csv(data_list):
 
 if __name__ == "__main__":
     STOCK_CODES = [
-        "AAPL","NVDA","AAPL","MSFT","AMZN"
-        ,"GOOGL","AVGO","META","TSLA","MU"
-        ,"AMD","ASML","INTC","CSCO","COST"
-        ,"LRCX","ARM","AMAT","NFLX","PLTR"
-        ,"TXN"
+        "NVDA","AAPL","MSFT","AMZN","GOOGL"
+        ,"AVGO","META","TSLA","MU","AMD"
+        ,"ASML","INTC","CSCO","COST","LRCX"
+        ,"ARM","AMAT","NFLX","PLTR","TXN"
     ]
 
     all_data = []
