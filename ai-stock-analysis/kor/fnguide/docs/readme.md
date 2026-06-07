@@ -4,6 +4,15 @@
 
 `crawl_fnguide.py`는 FnGuide 웹사이트에서 여러 국내 주식 종목의 재무 컨센서스 데이터를 자동으로 수집하여 CSV 파일로 저장하는 파이썬 스크립트입니다.
 
+
+결과 예
+
+<img src="../../../image/fnguide-google-spread.jpg">
+
+csv link : [fnguide-삼성전자포함34개-005930-20260606-130412.csv](<../output/fnguide-삼성전자포함34개-005930-20260606-130412.csv>)
+
+
+
 ## 2. 주요 기능
 
 - **다수 종목 데이터 수집**: 지정된 종목 코드 리스트에 대해 순차적으로 데이터를 수집합니다.
@@ -58,12 +67,12 @@ pip install selenium webdriver-manager beautifulsoup4
 ## 5. screenshot
 
 fnguide web site : https://comp.fnguide.com/SVO2/ASP/SVD_Consensus.asp?pGB=1&gicode=A005930&cID=&MenuYn=Y&ReportGB=&NewMenuID=108&stkGb=701
-![fnguide web site](../../image/fnguide.jpg)
+![fnguide web site](../../../image/fnguide.jpg)
 
 
 csv result
-![fnguide web site](../../image/fnguide-csv.jpg)
+![fnguide web site](../../../image/fnguide-csv.jpg)
 
 
 google spread example
-![fnguide web site](../../image/fnguide-google-spread.jpg)
+![fnguide web site](../../../image/fnguide-google-spread.jpg)

@@ -8,9 +8,9 @@
 
 결과 예
 
-<img src="../../image/us-stock-stats-from-yahoo-finance.jpg">
+<img src="../../../image/us-stock-stats-from-yahoo-finance.jpg">
 
-csv link : [yahoo-Yahoo Finance포함21개-AAPL-20260607-125658.csv](<output/yahoo-Yahoo Finance포함21개-AAPL-20260607-125658.csv>)
+csv link : [yahoo-Yahoo Finance포함21개-AAPL-20260607-125658.csv](<../output/yahoo-Yahoo Finance포함21개-AAPL-20260607-125658.csv>)
 
 ---
 
