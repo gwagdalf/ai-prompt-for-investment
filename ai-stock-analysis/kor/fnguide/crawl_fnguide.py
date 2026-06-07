@@ -152,7 +152,9 @@ def save_to_csv(data_list):
     now = datetime.now().strftime("%Y%m%d-%H%M%S")
     # 첫 번째 데이터를 기준으로 파일명 생성
     first_data = data_list[0]
-    filename = f"fnguide-{first_data['company']}포함{len(data_list)}개-{first_data['code']}-{now}.csv"
+    output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "output")
+    os.makedirs(output_dir, exist_ok=True)
+    filename = os.path.join(output_dir, f"fnguide-{first_data['company']}포함{len(data_list)}개-{first_data['code']}-{now}.csv")
     
     header = [
         'code', 'company', 'beta', 
